@@ -3,6 +3,7 @@ import { Bot, BotStatus } from './bot.model';
 import { IOrderService } from '../orders/order.service';
 import { OrderStatus } from '../orders/order.model';
 import { OrderDIKeys } from '../orders/key';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 // async/await is used here because in real world this would be some io process, i.g. read/write db
 export interface IBotService {
@@ -13,7 +14,7 @@ export interface IBotService {
 
 @Injectable()
 export class BotService implements IBotService {
-  private _bots: Bot[];
+  private _bots: Bot[] = [];
   private _nextBotId = 1;
 
   // robot:job - tracker
@@ -22,6 +23,7 @@ export class BotService implements IBotService {
   constructor(
     @Inject(OrderDIKeys.OrderService)
     private _orderService: IOrderService,
+    private _wsGateway: WebsocketGateway,
   ) {}
 
   async getAllBots(): Promise<Bot[]> {
@@ -41,6 +43,7 @@ export class BotService implements IBotService {
     };
 
     this._bots.push(newBot);
+    this._wsGateway.emitBotUpdate(this._bots);
 
     this.startProcessing(newBot.id);
 
@@ -54,6 +57,8 @@ export class BotService implements IBotService {
     const lastBot = this._bots.pop();
     const timer = this._jobTracker.get(lastBot.id);
     if (timer) clearTimeout(timer);
+
+    this._wsGateway.emitBotUpdate(this._bots);
   }
 
   // job assignments logic, optionally can move this to a standalone service

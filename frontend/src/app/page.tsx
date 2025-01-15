@@ -12,6 +12,9 @@ export default function Home() {
   const [bots, setBots] = useState<Bot[]>([]);
 
   useEffect(() => {
+    getAllBots();
+    getAllOrders();
+
     socket.on("orderUpdated", (updatedOrder: Order) => {
       if (updatedOrder.status === "PENDING") {
         setPendingOrders((prev) => [
@@ -22,7 +25,7 @@ export default function Home() {
         setPendingOrders((prev) =>
           prev.filter((o) => o.id !== updatedOrder.id)
         );
-        setCompletedOrders((prev) => [...prev, updatedOrder]);
+        setCompletedOrders((prev) => [updatedOrder, ...prev]);
       }
     });
 
@@ -36,8 +39,39 @@ export default function Home() {
     };
   }, []);
 
+  const getAllBots = async () => {
+    const response = await fetch("http://localhost:3002/bots", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    const fetchedBots = await response.json();
+    setBots(fetchedBots);
+  };
+
+  const getAllOrders = async () => {
+    const response = await fetch("http://localhost:3002/orders", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    const fetchedOrders: Order[] = (await response.json()) ?? [];
+
+    setPendingOrders(
+      fetchedOrders.filter((order) =>
+        ["PENDING", "PROCESSING"].includes(order.status)
+      )
+    );
+    setCompletedOrders(
+      fetchedOrders.filter((order) => order.status === "COMPLETED")
+      // .sort(
+      //   (order1, order2) =>
+      //     new Date(order2.createdAt).getTime() -
+      //     new Date(order1.createdAt).getTime()
+      // )
+    );
+  };
+
   const createOrder = async (isVip: boolean) => {
-    const response = await fetch("/api/orders", {
+    const response = await fetch("http://localhost:3002/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isVip }),
@@ -47,21 +81,21 @@ export default function Home() {
   };
 
   const addBot = async () => {
-    const response = await fetch("/api/bots", {
+    const response = await fetch("http://localhost:3002/bots/spawn", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
     const updatedBots = await response.json();
-    setBots(updatedBots);
+    setBots([...bots, updatedBots]);
   };
 
   const removeBot = async () => {
-    const response = await fetch("/api/bots", {
+    await fetch("http://localhost:3002/bots/deduct", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
-    const updatedBots = await response.json();
-    setBots(updatedBots);
+
+    getAllBots();
   };
 
   return (
@@ -76,40 +110,10 @@ export default function Home() {
       <div className="flex justify-between gap-4 mt-4">
         <div className="flex flex-col flex-1">
           <OrderArea title="PENDING" orders={pendingOrders} />
-          <div className="mt-4 px-4">
-            <h2 className="text-xl font-bold mb-2">0001</h2>
-            {/* <div className="flex gap-2">
-              {bots.map((bot) => (
-            <div
-              key={bot.id}
-              className={`p-2 rounded ${
-                bot.status === "IDLE" ? "bg-gray-200" : "bg-green-200"
-              }`}
-            >
-              Bot {bot.id}: {bot.status}
-            </div>
-          ))}
-            </div> */}
-          </div>
         </div>
 
         <div className="flex flex-col flex-1">
           <OrderArea title="COMPLETED" orders={completedOrders} />
-          <div className="mt-4 px-4">
-            <h2 className="text-xl font-bold mb-2">0001</h2>
-            {/* <div className="flex gap-2">
-              {bots.map((bot) => (
-            <div
-              key={bot.id}
-              className={`p-2 rounded ${
-                bot.status === "IDLE" ? "bg-gray-200" : "bg-green-200"
-              }`}
-            >
-              Bot {bot.id}: {bot.status}
-            </div>
-          ))}
-            </div> */}
-          </div>
         </div>
       </div>
     </div>

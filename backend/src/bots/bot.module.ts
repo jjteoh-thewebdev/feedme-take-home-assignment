@@ -3,9 +3,10 @@ import { OrderModule } from '../orders/order.module';
 import { BotsController } from './bots.controller';
 import { BotService } from './bot.service';
 import { BotDIKeys } from './key';
+import { WebsocketModule } from '../websocket/websocket.module';
 
 @Module({
-  imports: [OrderModule],
+  imports: [OrderModule, WebsocketModule],
   providers: [
     {
       provide: BotDIKeys.BotService,

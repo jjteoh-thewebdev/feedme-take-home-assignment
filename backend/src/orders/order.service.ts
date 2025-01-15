@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Order, OrderStatus } from './order.model';
+import { WebsocketGateway } from '../websocket/websocket.gateway';
 
 // async/await is used here because in real world this would be some io process, i.g. read/write db
 export interface IOrderService {
@@ -18,6 +19,8 @@ export class OrderService implements IOrderService {
   // we will use in-memory storage for this prototype
   private _orders: Order[] = [];
   private _nextOrderId = 1;
+
+  constructor(private _wsGateway: WebsocketGateway) {}
 
   async createOrder(isVip = false): Promise<Order> {
     // for prototyping purpose, we limit orders only at 100
@@ -69,6 +72,8 @@ export class OrderService implements IOrderService {
     }
 
     order.status = status;
+
+    this._wsGateway.emitOrderUpdate(order);
     return order;
   }
 }
