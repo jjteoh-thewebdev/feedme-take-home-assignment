@@ -1,10 +1,13 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Order, OrderStatus } from './order.model';
 import { WebsocketGateway } from '../websocket/websocket.gateway';
+import { BotDIKeys } from '../bots/key';
+import { BotService } from '../bots/bot.service';
 
 // async/await is used here because in real world this would be some io process, i.g. read/write db
 export interface IOrderService {
@@ -56,7 +59,6 @@ export class OrderService implements IOrderService {
   }
 
   async getOrders(): Promise<Order[]> {
-    // TODO: pagination
     return this._orders;
   }
 
@@ -73,7 +75,11 @@ export class OrderService implements IOrderService {
 
     order.status = status;
 
-    this._wsGateway.emitOrderUpdate(order);
+    try {
+      this._wsGateway.emitOrderUpdate(order);
+    } catch (error) {
+      console.log(`websocket failed to emit OrderUpdated`, error);
+    }
     return order;
   }
 }
