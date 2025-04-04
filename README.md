@@ -1,3 +1,30 @@
+
+## Final Project Preview
+
+<div align="center">
+  <img src="preview.gif" />
+</div>
+
+### Run the app locally
+
+Frontend(Next.js app):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Backend(Nest.js api server):
+```bash
+cd backend
+npm install
+npm run start:dev
+```
+
+
+<hr />
+
 ## FeedMe Software Engineer Take Home Assignment
 Below is a take home assignment before the interview of the position. You are required to
 1. Understand the situation and use case. You may contact the interviewer for further clarification.
